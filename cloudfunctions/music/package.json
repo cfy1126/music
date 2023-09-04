@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.19.2",
+    "tcb-router": "^1.1.2",
     "wx-server-sdk": "~2.6.3"
   }
 }

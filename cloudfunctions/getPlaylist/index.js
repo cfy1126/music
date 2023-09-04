@@ -1,18 +1,12 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
-
+const axios = require('axios')
 cloud.init({
   env: 'develop-1gql0wjg71ab156f',
 })
-
 const db = cloud.database()
-
-const axios = require('axios')
-
 const URL = 'https://apis.imooc.com/personalized?icode=B6A89A236239CE7A'
-
 const playlistCollection = db.collection('playlist')
-
 const MAX_LIMIT = 100
 
 // 云函数入口函数
@@ -35,8 +29,7 @@ exports.main = async (event, context) => {
       }
     })
   }
-
-  // 更新代码: axios发送请求，请求新的URL
+  // 获取非云数据库数据
   const {
     data
   } = await axios.get(URL)
@@ -45,7 +38,6 @@ exports.main = async (event, context) => {
     return 0
   }
   const playlist = data.result
-
   const newData = []
   for (let i = 0, len1 = playlist.length; i < len1; i++) {
     let flag = true
@@ -65,7 +57,7 @@ exports.main = async (event, context) => {
   }
   console.log(newData)
   console.log([...newData])
-  // 更新代码: 一次性批量插入数据
+  //  插入数据到云数据库
   if (newData.length > 0) {
     await playlistCollection.add({
       data: newData
@@ -76,6 +68,5 @@ exports.main = async (event, context) => {
       console.error('插入失败')
     })
   }
-
   return newData.length
 }
