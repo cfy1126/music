@@ -5,6 +5,10 @@ const backgroundAudioManager = wx.getBackgroundAudioManager()
 let currentSec = 0
 // 设置当前播放总时长
 // let duration = 0
+/**
+ * 解决：onTimeUpdate拖动滚动条闪烁问题
+ */
+let isMoving = false
 Component({
   properties: {
 
@@ -31,6 +35,7 @@ Component({
         this.data.progress = event.detail.x / (movableAreaWidth - movableViewWidth) * 100;
         this.data.movableDis = event.detail.x
       }
+      isMoving = true
     },
     onTouchEnd() {
       console.log('onTouchEnd');
@@ -46,6 +51,7 @@ Component({
         ['showTime.currentTime']: `${min}:${sec}`
       })
       backgroundAudioManager.seek(duration * this.data.progress / 100)
+      isMoving = false
     },
     _getMovableDis() {
       const query = this.createSelectorQuery()
@@ -59,6 +65,7 @@ Component({
     _bindBGMEvent() {
       backgroundAudioManager.onPlay(() => {
         console.log('onPlay');
+        isMoving = false
       })
       backgroundAudioManager.onStop(() => {
         console.log('onStop');
@@ -83,24 +90,27 @@ Component({
       })
       // 监听音乐的播放进度（前台播放）
       backgroundAudioManager.onTimeUpdate(() => {
-        const currentTime = backgroundAudioManager.currentTime
-        const duration = backgroundAudioManager.duration
-        const secs = currentTime.toString().split('.')[0]
-        if (secs != currentSec) {
-          const {
-            min,
-            sec
-          } = this._dateFormat(Math.floor(currentTime))
-          this.setData({
-            movableDis: (movableAreaWidth - movableViewWidth) * currentTime / duration,
-            progress: currentTime / duration * 100,
-            ['showTime.currentTime']: `${min}:${sec}`
-          })
-          currentSec = secs
+        if (!isMoving) {
+          const currentTime = backgroundAudioManager.currentTime
+          const duration = backgroundAudioManager.duration
+          const secs = currentTime.toString().split('.')[0]
+          if (secs != currentSec) {
+            const {
+              min,
+              sec
+            } = this._dateFormat(Math.floor(currentTime))
+            this.setData({
+              movableDis: (movableAreaWidth - movableViewWidth) * currentTime / duration,
+              progress: currentTime / duration * 100,
+              ['showTime.currentTime']: `${min}:${sec}`
+            })
+            currentSec = secs
+          }
         }
       })
       // 监听音乐播放完成后动作
       backgroundAudioManager.onEnded(() => {
+        this.triggerEvent('musicEnd')
         console.log('onEnded');
       })
       // 监听音乐播放出现错误
